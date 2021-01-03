@@ -1,6 +1,6 @@
 """
     Dataset Classes for loading the GL images from
-    fits files
+    fits files and classes to apply transformations
 
     Based from pytorch "WRITING CUSTOM DATASETS, DATALOADERS AND TRANSFORMS"
     tutorial:
@@ -51,13 +51,28 @@ class SpaceBasedDataset(Dataset):
         )
         
         # Sample for return
-        sample = {
-            'image': np.reshape(
-                image,
-                (101,101,1) 
-            ) # Consider Channel 
-        }
+        sample = np.reshape(
+            image,
+            (101,101,1)
+        )
+
         if self.transform:
             sample = self.transform(sample)
         return sample 
 
+class PreprocessLensImage(object):
+    """
+        Apply Preprocess to Lens Images
+    """
+    def __init__(self,x_max,x_min):
+        self.x_max = x_max
+        self.x_min = x_min
+
+    def __call__(self,sample):
+        """
+            Scale "sample" image to [-1, 1] and transform it
+            to a torch tensor
+        """
+        sample[sample==100] = 0 #fix masked pixels    
+        sample = (sample-self.x_min)/(self.x_max - self.x_min) #scale between 0,1
+        return torch.from_numpy(sample*2 - 1) #re-scaled between -1,1 and transform to tensor
