@@ -10,6 +10,24 @@ NH = 101
 NW = 101
 ALPHA = 0.2
 
+def weights_init(m):
+    """
+        Weights initializer for both networks
+
+        Glorot uniform for Conv and Linear Layers.
+        Keras Default for BatchNorm
+    """
+    class_name = m.__class__.__name__
+    if class_name.find('Conv') != -1:
+        nn.init.xavier_uniform_(m.weight.data)
+    
+    elif class_name.find('Linear') != -1:
+        nn.init.xavier_uniform_(m.weight.data)
+    
+    elif class_name.find('BatchNorm') != -1:
+        nn.init.constant_(m.weight.data,1)
+        nn.init.constant_(m.bias.data,0)
+
 class Discriminator(nn.Module):
     def __init__(self):
         """
