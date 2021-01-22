@@ -17,10 +17,13 @@ class Discriminator(nn.Module):
             using a Sequential container
         """
         super(Discriminator,self).__init__()
-        self.main = nn.Sequential(
+        self.stem = nn.Sequential(
             # Stem Group 
             nn.Conv2d(NC,32,3,stride=1,padding=1),
-            nn.LeakyReLU(ALPHA,inplace=True),
+            nn.LeakyReLU(ALPHA,inplace=True)
+        )
+
+        self.learner = nn.Sequential(
             # Learner Group
             # First Block
             nn.Conv2d(32,64,3,stride=2,padding=1),
@@ -33,7 +36,10 @@ class Discriminator(nn.Module):
             # Third Block
             nn.Conv2d(128,256,3,stride=2,padding=1),
             nn.BatchNorm2d(256),
-            nn.LeakyReLU(ALPHA,inplace=True),
+            nn.LeakyReLU(ALPHA,inplace=True)
+        )
+
+        self.task = nn.Sequential(
             # Task Group
             nn.Flatten(),
             nn.Dropout(0.4,inplace=True),
@@ -43,7 +49,10 @@ class Discriminator(nn.Module):
         )
     
     def forward(self,input):
-        return self.main(input)
+        output = self.stem(input)
+        output = self.learner(output)
+        output = self.task(output)
+        return output
 
 class View(nn.Module):
     """
@@ -63,12 +72,15 @@ class Generator(nn.Module):
             using a Sequential container
         """
         super(Generator,self).__init__()
-        self.main = nn.Sequential(
+        self.stem = nn.Sequential(
             #STEM GROUP
             nn.Linear(100,18432),
             nn.LeakyReLU(ALPHA,inplace=True),
             View((-1,12,12,128)),
-            nn.ZeroPad2d((0,1,0,1)),
+            nn.ZeroPad2d((0,1,0,1))     
+        )
+
+        self.Learner = nn.Sequential(
             #Conv Group
             #First Block
             nn.ConvTranspose2d(128,128,4,stride=2,padding=0),
@@ -84,7 +96,10 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(64,32,4,stride=2,padding=0),
             nn.Conv2d(32,32,3,stride=1,padding=1),
             nn.BatchNorm2d(32),
-            nn.LeakyReLU(ALPHA,inplace=True),
+            nn.LeakyReLU(ALPHA,inplace=True)
+        )
+
+        self.task = nn.Sequential(
             #Task Group
             nn.ConvTranspose2d(32,1,3,stride=1,padding=1),
             nn.Tanh(),
@@ -92,5 +107,8 @@ class Generator(nn.Module):
         )
     
     def forward(self,input):
-        return self.main(input)
+        output = self.stem(input),
+        output = self.learner(output),
+        output = self.task(output)
+        return output
 
