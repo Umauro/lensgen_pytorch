@@ -44,16 +44,17 @@ class SpaceBasedDataset(Dataset):
             self.image_folder_path,
             self.df.iloc[idx,0] #Get image ID
         )
+
         # open fits file with astropy
         image = fits.getdata(
-            get_pkg_data_filename(image_path),
+            image_path,
             ext=0
         )
         
         # Sample for return
         sample = np.reshape(
             image,
-            (101,101,1)
+            (1,101,101)
         )
 
         if self.transform:

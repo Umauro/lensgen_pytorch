@@ -60,7 +60,7 @@ class Discriminator(nn.Module):
         self.task = nn.Sequential(
             # Task Group
             nn.Flatten(),
-            nn.Dropout(0.4,inplace=True),
+            nn.Dropout(0.4),
             # Flatten result from 13x13x256
             nn.Linear(13*13*256,1),
             nn.Sigmoid()
@@ -92,13 +92,13 @@ class Generator(nn.Module):
         super(Generator,self).__init__()
         self.stem = nn.Sequential(
             #STEM GROUP
-            nn.Linear(100,18432),
+            nn.Linear(100,128*12*12),
             nn.LeakyReLU(ALPHA,inplace=True),
-            View((-1,12,12,128)),
+            View((-1,128,12,12)),
             nn.ZeroPad2d((0,1,0,1))     
         )
 
-        self.Learner = nn.Sequential(
+        self.learner = nn.Sequential(
             #Conv Group
             #First Block
             nn.ConvTranspose2d(128,128,4,stride=2,padding=0),
@@ -125,8 +125,8 @@ class Generator(nn.Module):
         )
     
     def forward(self,input):
-        output = self.stem(input),
-        output = self.learner(output),
+        output = self.stem(input)
+        output = self.learner(output)
         output = self.task(output)
         return output
 
