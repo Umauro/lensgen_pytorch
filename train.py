@@ -1,4 +1,6 @@
 import argparse
+import os
+import errno
 from tqdm.auto import tqdm
 
 #torch stuff
@@ -6,8 +8,8 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torchvision import transforms, utils
-
+from torchvision import transforms
+from torchvision import utils as vutils
 
 # utils and networks models
 from utils.dataset import SpaceBasedDataset, PreprocessLensImage
@@ -42,6 +44,13 @@ parser.add_argument(
     type=int,
     help='size of minibatch for training'
 )
+
+parser.add_argument(
+    'generator_save_path',
+    type=str,
+    help='path for final generator weights'
+)
+
 # PARSE ARGUMENTS
 args = parser.parse_args()
 
@@ -49,6 +58,15 @@ CSV_PATH = args.csv_path
 IMAGE_FOLDER_PATH = args.image_folder_path
 EPOCHS = args.epochs
 BATCH_SIZE = args.batch_size
+GENERATOR_SAVE_PATH = args.generator_save_path
+
+# Create save folder if not exists
+try:
+    os.mkdir(GENERATOR_SAVE_PATH)
+    print('Generator folder created')
+except OSError as error:
+    if error.errno != errno.EEXIST:
+        raise
 
 # TRAIN DATASET STATS
 TRAIN_MAX = -4.2955635e-12
@@ -104,7 +122,8 @@ d_losses = []
 g_losses = []
 
 for epoch in range(EPOCHS):
-    for train_step, real_data in enumerate(tqdm(dataloader)):
+    progress_bar = tqdm(dataloader)
+    for train_step, real_data in enumerate(progress_bar):
         #======================#
         # Discriminator Train  #
         #======================#
@@ -135,8 +154,8 @@ for epoch in range(EPOCHS):
         synthetic_outputs = d_model(synthetic_inputs.detach()).view(-1) #Forward pass
         d_loss_synthetic = loss_function(synthetic_outputs,labels) #loss calculation
         d_loss_synthetic.backward() #Backward pass
-
-        d_losses.append(d_loss_real + d_loss_synthetic)
+        d_loss = d_loss_real + d_loss_synthetic
+        d_losses.append(d_loss)
 
         d_optimizer.step() # discriminator train step
 
@@ -154,3 +173,13 @@ for epoch in range(EPOCHS):
         g_losses.append(g_loss)
 
         g_optimizer.step() # Generator train step
+        progress_bar.set_postfix(d_loss = d_loss.item(),g_loss= g_loss.item())
+
+#save generator model
+torch.save(
+    g_model.state_dict(),
+    '{}/generator_{}_epoch.pt'.format(
+        GENERATOR_SAVE_PATH,
+        EPOCHS
+    )
+) 
