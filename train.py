@@ -1,13 +1,19 @@
 import argparse
+from tqdm.auto import tqdm
 
+#torch stuff
 import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms, utils
+
+
+# utils and networks models
 from utils.dataset import SpaceBasedDataset, PreprocessLensImage
+from utils.train_utils import label_noise
 from dcgan_models import Discriminator, Generator, weights_init
-from tqdm.auto import tqdm 
+
 
 parser = argparse.ArgumentParser(
     description='Arguments for train process'
@@ -83,8 +89,9 @@ g_model.apply(weights_init)
 LR = 0.00009
 BETA_1 = 0.5
 BETA_2 = 0.999
+FRAC = 0.05
 
-real_label = 1
+real_label = 0.9 # For One-sided Label Smoothing
 synthetic_label = 0
 
 loss_function = nn.BCELoss()
@@ -105,12 +112,15 @@ for epoch in range(EPOCHS):
         d_model.zero_grad() #set gradients to 0
         real_inputs = real_data.to(device)
         batch_size = real_inputs.size(0)
-        labels = torch.full(
-            (batch_size,),
-            real_label,
-            dtype=torch.float,
-            device=device
-        )
+        labels = label_noise(
+            torch.full(
+                (batch_size,),
+                real_label,
+                dtype=torch.float,
+                device=device
+            ),
+            FRAC
+        ) #apply noisy labels
         
         real_outputs = d_model(real_inputs).view(-1) #Forward pass
         
@@ -121,7 +131,7 @@ for epoch in range(EPOCHS):
         noise = torch.randn(batch_size,100,device=device) #sample from N(0,1)
         synthetic_inputs = g_model(noise)
         labels.fill_(synthetic_label) #set labels to 0
-
+        labels = label_noise(labels,FRAC) #noisy labels c:
         synthetic_outputs = d_model(synthetic_inputs.detach()).view(-1) #Forward pass
         d_loss_synthetic = loss_function(synthetic_outputs,labels) #loss calculation
         d_loss_synthetic.backward() #Backward pass
