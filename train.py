@@ -178,7 +178,7 @@ for epoch in range(EPOCHS):
         d_loss_synthetic = loss_function(synthetic_outputs,labels) #loss calculation
         d_loss_synthetic.backward() #Backward pass
         d_loss = d_loss_real + d_loss_synthetic
-        d_losses.append(d_loss)
+        d_losses.append(d_loss.item())
 
         d_optimizer.step() # discriminator train step
 
@@ -193,12 +193,12 @@ for epoch in range(EPOCHS):
         g_loss = loss_function(synthetic_outputs,labels) # forward pass
         g_loss.backward() # backward pass
 
-        g_losses.append(g_loss)
+        g_losses.append(g_loss.item())
 
         g_optimizer.step() # Generator train step
         progress_bar.set_postfix(d_loss = d_loss.item(),g_loss= g_loss.item())
 
-    if SAVE_PROGRESS and ((epoch + 1) % 1 == 0):
+    if SAVE_PROGRESS and ((epoch + 1) % 5 == 0):
         with torch.no_grad():
             synthetic_images = g_model(fixed_noise).detach().cpu()
         image_list.append(
@@ -209,13 +209,14 @@ for epoch in range(EPOCHS):
             )
         )
 
-model_timestamp = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
+model_timestamp = datetime.datetime.now().strftime("%d-%m-%y-%H%M%S")
 
 #Save progress
 if SAVE_PROGRESS:
-    image_list = [[plt.imshow(np.transpose(i,(1,2,0)),animated=True)] for i in image_list]
-    fig = plt.figure(figsize=(30,30))
-    ani = animation.ArtistAnimation(fig,image_list,interval=1000,repeat_delay=1000,blit=True)
+    ims = [[plt.imshow(np.transpose(i,(1,2,0)),animated=True)] for i in image_list]
+    fig = plt.figure(figsize=(15,15))
+    plt.axis('off')
+    ani = animation.ArtistAnimation(fig,ims,blit=True)
     ani.save(
         r'{}/{}_{}_epochs.gif'.format(
             PROGRESS_PATH,
@@ -224,7 +225,6 @@ if SAVE_PROGRESS:
         ),
         animation.PillowWriter()
     )
-    plt.show()
 
 #Save train losses
 df_losses = pd.DataFrame({
