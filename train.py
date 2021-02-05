@@ -2,6 +2,11 @@ import argparse
 import os
 import errno
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+import pandas as pd
+import datetime
 
 #torch stuff
 import torch
@@ -12,9 +17,9 @@ from torchvision import transforms
 from torchvision import utils as vutils
 
 # utils and networks models
-from utils.dataset import SpaceBasedDataset, PreprocessLensImage
-from utils.train_utils import label_noise
-from dcgan_models import Discriminator, Generator, weights_init
+from src.utils.dataset import SpaceBasedDataset, PreprocessLensImage
+from src.utils.train_utils import label_noise
+from src.dcgan_models import Discriminator, Generator, weights_init
 
 
 parser = argparse.ArgumentParser(
@@ -22,34 +27,39 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    'csv_path',
+    '--csv_path',
     type=str,
     help='path for csv file with image annotations'
 )
 
 parser.add_argument(
-    'image_folder_path',
+    '--image_folder_path',
     type=str,
     help='path for images folder'
 )
 
 parser.add_argument(
-    'epochs',
+    '--epochs',
     type=int,
     help='number of epochs for training'
 )
 
 parser.add_argument(
-    'batch_size',
+    '--batch_size',
     type=int,
     help='size of minibatch for training'
 )
 
+
 parser.add_argument(
-    'generator_save_path',
-    type=str,
-    help='path for final generator weights'
+    '--save_progress',
+    type=bool,
+    required=False,
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help='use this for save training generated images every 10 epochs'
 )
+
 
 # PARSE ARGUMENTS
 args = parser.parse_args()
@@ -58,12 +68,23 @@ CSV_PATH = args.csv_path
 IMAGE_FOLDER_PATH = args.image_folder_path
 EPOCHS = args.epochs
 BATCH_SIZE = args.batch_size
-GENERATOR_SAVE_PATH = args.generator_save_path
+SAVE_PROGRESS = args.save_progress
 
-# Create save folder if not exists
+# Create save folders if not exists
+
+MODELS_PATH = 'models'
+PROGRESS_PATH = 'results/train'
+
 try:
-    os.mkdir(GENERATOR_SAVE_PATH)
-    print('Generator folder created')
+    os.mkdir(MODELS_PATH)
+    print('Models folder created')
+except OSError as error:
+    if error.errno != errno.EEXIST:
+        raise
+
+try:
+    os.makedirs(PROGRESS_PATH)
+    print('Progress folder created')
 except OSError as error:
     if error.errno != errno.EEXIST:
         raise
@@ -111,6 +132,7 @@ FRAC = 0.05
 
 real_label = 0.9 # For One-sided Label Smoothing
 synthetic_label = 0
+fixed_noise = torch.randn(BATCH_SIZE,100,device=device)
 
 loss_function = nn.BCELoss()
 
@@ -118,8 +140,9 @@ d_optimizer = optim.Adam(d_model.parameters(),lr=LR,betas=(BETA_1,BETA_2))
 g_optimizer = optim.Adam(g_model.parameters(),lr=LR,betas=(BETA_1,BETA_2))
 
 #Begin Training Loop
-d_losses = []
-g_losses = []
+d_losses = list()
+g_losses = list()
+image_list = list()
 
 for epoch in range(EPOCHS):
     progress_bar = tqdm(dataloader)
@@ -175,11 +198,48 @@ for epoch in range(EPOCHS):
         g_optimizer.step() # Generator train step
         progress_bar.set_postfix(d_loss = d_loss.item(),g_loss= g_loss.item())
 
-#save generator model
+    if SAVE_PROGRESS and ((epoch + 1) % 1 == 0):
+        with torch.no_grad():
+            synthetic_images = g_model(fixed_noise).detach().cpu()
+        image_list.append(
+            vutils.make_grid(
+                synthetic_images,
+                padding=2,
+                normalize=True
+            )
+        )
+
+model_timestamp = datetime.datetime.now().strftime("%d%m%y-%H%M%S")
+
+#Save progress
+if SAVE_PROGRESS:
+    image_list = [[plt.imshow(np.transpose(i,(1,2,0)),animated=True)] for i in image_list]
+    fig = plt.figure(figsize=(30,30))
+    ani = animation.ArtistAnimation(fig,image_list,interval=1000,repeat_delay=1000,blit=True)
+    ani.save(
+        r'{}/{}_{}_epochs.gif'.format(
+            PROGRESS_PATH,
+            model_timestamp,
+            EPOCHS
+        ),
+        animation.PillowWriter()
+    )
+    plt.show()
+
+#Save train losses
+df_losses = pd.DataFrame({
+    'd_loss': d_losses,
+    'g_loss': g_losses
+})
+
+df_losses.to_csv('{}/{}_{}_epochs.csv'.format(PROGRESS_PATH,model_timestamp,EPOCHS),sep=';',index=False)
+
+#Save generator model
 torch.save(
     g_model.state_dict(),
-    '{}/generator_{}_epoch.pt'.format(
-        GENERATOR_SAVE_PATH,
+    '{}/{}_{}_epochs.pt'.format(
+        MODELS_PATH,
+        model_timestamp,
         EPOCHS
     )
 ) 
