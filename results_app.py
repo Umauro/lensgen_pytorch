@@ -19,16 +19,22 @@ model_name = st.sidebar.selectbox(
     'Select generator model',
     models_list
 )
-
-g_model, device = load_model(model_name)
+if len(models_list):
+    g_model, device = load_model(model_name)
+    show_content = True
+else:
+    show_content = False
+    
 
 #====================#
 #   Principal page   #
 #====================#
+st.title('Lensgen train results')
+if show_content:
+    st.header('Example generated lens')
+    plot_generated_lens(g_model,device)
 
-st.title('Lensgen train results') 
-st.header('Example generated lens')
-plot_generated_lens(g_model,device)
-
-st.header('Training losses')
-plot_training_losses(model_name)
+    st.header('Training losses')
+    plot_training_losses(model_name)
+else:
+    st.warning('No generator models available')

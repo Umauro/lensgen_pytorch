@@ -154,6 +154,12 @@ for epoch in range(EPOCHS):
         d_model.zero_grad() #set gradients to 0
         real_inputs = real_data.to(device)
         batch_size = real_inputs.size(0)
+        # labels = torch.full(
+        #     (batch_size,),
+        #     real_label,
+        #     dtype=torch.float,
+        #     device=device
+        # )
         labels = label_noise(
             torch.full(
                 (batch_size,),
@@ -189,7 +195,7 @@ for epoch in range(EPOCHS):
         noise = torch.randn(batch_size,100,device=device)
         synthetic_inputs = g_model(noise)
         labels.fill_(real_label) #Set labels to 1 to mislead the discriminator
-        synthetic_outputs = d_model(synthetic_inputs.detach()).view(-1)
+        synthetic_outputs = d_model(synthetic_inputs).view(-1)
         g_loss = loss_function(synthetic_outputs,labels) # forward pass
         g_loss.backward() # backward pass
 
