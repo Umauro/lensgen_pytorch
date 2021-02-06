@@ -29,24 +29,30 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '--csv_path',
     type=str,
+    required=True,
     help='path for csv file with image annotations'
 )
 
 parser.add_argument(
     '--image_folder_path',
     type=str,
+    required=True,
     help='path for images folder'
 )
 
 parser.add_argument(
     '--epochs',
     type=int,
+    required=True,
+    default=100,
     help='number of epochs for training'
 )
 
 parser.add_argument(
     '--batch_size',
     type=int,
+    required=True,
+    default=64,
     help='size of minibatch for training'
 )
 
@@ -90,8 +96,8 @@ except OSError as error:
         raise
 
 # TRAIN DATASET STATS
-TRAIN_MAX = -4.2955635e-12
-TRAIN_MIN = 2.1745163e-09
+TRAIN_MIN = -4.2955635e-12
+TRAIN_MAX = 2.1745163e-09
 
 #Instanciate Dataset and Dataloader
 lens_dataset = SpaceBasedDataset(
@@ -169,7 +175,6 @@ for epoch in range(EPOCHS):
             ),
             FRAC
         ) #apply noisy labels
-        
         real_outputs = d_model(real_inputs).view(-1) #Forward pass
         
         d_loss_real = loss_function(real_outputs,labels) #loss calculation

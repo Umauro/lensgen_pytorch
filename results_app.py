@@ -32,7 +32,8 @@ else:
 st.title('Lensgen train results')
 if show_content:
     st.header('Example generated lens')
-    plot_generated_lens(g_model,device)
+    n_images = st.slider('Select number of images',min_value=1,max_value=10,value=5)
+    plot_generated_lens(g_model,device,n_images)
 
     st.header('Training losses')
     plot_training_losses(model_name)

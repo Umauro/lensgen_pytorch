@@ -12,6 +12,8 @@ from src.dcgan_models import Generator
 
 plt.style.use('seaborn') #plot styles
 
+TRAIN_MAX = -4.2955635e-12
+TRAIN_MIN = 2.1745163e-09
 MODELS_PATH = 'models'
 RESULTS_PATH = 'results/train'
 
@@ -31,13 +33,16 @@ def load_model(model_name):
     g_model.to(device)
     return g_model, device
 
-def plot_generated_lens(model,device):
-    noise = torch.randn(5,100,device=device)
+def plot_generated_lens(model,device,n_images):
+    noise = torch.randn(n_images,100,device=device)
     with torch.no_grad():
         generated_lens = model(noise).detach().cpu()
-    fig = plt.figure()
-    plt.axis('off')
-    plt.imshow(np.transpose(vutils.make_grid(generated_lens,padding=5,normalize=True),(1,2,0)))
+    generated_lens = np.transpose(generated_lens,(0,2,3,1))
+    fig,axes = plt.subplots(1,n_images)
+    plt.subplots_adjust(wspace=0.05)
+    for index in range(n_images):
+        axes[index].imshow(generated_lens[index,:,:,0],cmap='hot')
+        axes[index].axis('off')
     st.pyplot(fig)
 
 def plot_training_losses(model_name):
@@ -45,18 +50,13 @@ def plot_training_losses(model_name):
     try:
         df = pd.read_csv(csv_path,sep=';')
         train_steps = [x for x in range(len(df))]
-        fig = plt.figure(figsize=(15,7))
-        plt.plot(train_steps,df['d_loss'],label='Discriminator Loss')
-        plt.plot(train_steps,df['g_loss'],label='Generator Loss')
-        plt.xlabel('Train step',fontsize=20)
-        plt.ylabel('Loss function',fontsize=20)
-        plt.legend(
-            fontsize=20,
-            loc=1,
-            edgecolor='inherit',
-            frameon=True,
-            shadow=True
-        )
+        fig,axes = plt.subplots(2,1,figsize=(15,12))
+        for index, column_name in enumerate(df.columns):
+            axes[index].plot(train_steps,df[column_name],label=column_name)
+            axes[index].set_xlabel('Train step',size=15)
+            axes[index].set_ylabel('Loss function',size=15)
+            axes[index].set_title('{} versus train step'.format(column_name),size=15)
+            axes[index].legend()
         st.pyplot(fig)
 
         
