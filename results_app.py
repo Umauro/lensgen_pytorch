@@ -8,7 +8,8 @@ from src.streamlit_app.app_utils import (
     plot_training_losses,
     get_available_models,
     plot_generated_lens, 
-    load_model
+    load_model,
+    plot_interpolation
 )
 
 #====================#
@@ -32,10 +33,26 @@ else:
 st.title('Lensgen train results')
 if show_content:
     st.header('Example generated lens')
-    n_images = st.slider('Select number of images',min_value=1,max_value=10,value=5)
+    n_images = st.slider('Select the number of images',min_value=1,max_value=10,value=5)
     plot_generated_lens(g_model,device,n_images)
 
     st.header('Training losses')
     plot_training_losses(model_name)
+
+    st.header('Latent space interpolation')
+    n_interpolations = st.slider(
+        'Select the number of interpolations experiments',
+        min_value=2,
+        max_value=10,
+        value=5
+    )
+    n_points = st.slider(
+        'Select the number of interpolated points for each experiment',
+        min_value=2,
+        max_value=10,
+        value=5
+    )
+    plot_interpolation(g_model,device,n_interpolations,n_points)
+
 else:
     st.warning('No generator models available')
