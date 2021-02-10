@@ -7,6 +7,7 @@ import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
 import datetime
+from skimage.color import rgb2gray
 
 #torch stuff
 import torch
@@ -213,10 +214,13 @@ for epoch in range(EPOCHS):
         with torch.no_grad():
             synthetic_images = g_model(fixed_noise).detach().cpu()
         image_list.append(
-            vutils.make_grid(
-                synthetic_images,
-                padding=2,
-                normalize=True
+            np.transpose(
+                vutils.make_grid(
+                    synthetic_images,
+                    padding=2,
+                    normalize=True
+                ),
+                (1,2,0) #Channels first to channels last
             )
         )
 
@@ -224,10 +228,16 @@ model_timestamp = datetime.datetime.now().strftime("%d-%m-%y-%H%M%S")
 
 #Save progress
 if SAVE_PROGRESS:
-    ims = [[plt.imshow(np.transpose(i,(1,2,0)),animated=True)] for i in image_list]
     fig = plt.figure(figsize=(15,15))
     plt.axis('off')
-    ani = animation.ArtistAnimation(fig,ims,blit=True)
+    ims = [[plt.imshow(rgb2gray(image),cmap='hot',animated=True)] for image in image_list]
+    ani = animation.ArtistAnimation(
+        fig,
+        ims,
+        interval=5000,
+        repeat_delay=10000,
+        blit=True
+    )
     ani.save(
         r'{}/{}_{}_epochs.gif'.format(
             PROGRESS_PATH,
