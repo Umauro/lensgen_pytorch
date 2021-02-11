@@ -161,12 +161,6 @@ for epoch in range(EPOCHS):
         d_model.zero_grad() #set gradients to 0
         real_inputs = real_data.to(device)
         batch_size = real_inputs.size(0)
-        # labels = torch.full(
-        #     (batch_size,),
-        #     real_label,
-        #     dtype=torch.float,
-        #     device=device
-        # )
         labels = label_noise(
             torch.full(
                 (batch_size,),
@@ -253,7 +247,15 @@ df_losses = pd.DataFrame({
     'g_loss': g_losses
 })
 
-df_losses.to_csv('{}/{}_{}_epochs.csv'.format(PROGRESS_PATH,model_timestamp,EPOCHS),sep=';',index=False)
+df_losses.to_csv(
+    '{}/{}_{}_epochs.csv'.format(
+        PROGRESS_PATH,
+        model_timestamp,
+        EPOCHS
+    ),
+    sep=';',
+    index=False
+)
 
 #Save generator model
 torch.save(

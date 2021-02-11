@@ -5,6 +5,7 @@ import numpy as np
 import errno
 import glob
 import torch 
+import base64
 
 from torchvision import utils as vutils
 from sklearn.metrics.pairwise import cosine_similarity
@@ -151,4 +152,20 @@ def sidebar_intro():
         
         ---
         """   
+    )
+
+def show_training_progress_gif(model_name):
+    @st.cache
+    def generate_gif_url(gif_path):
+        with open(gif_path,"rb") as gif_file:
+            gif_content = gif_file.read()
+            gif_url = base64.b64encode(gif_content).decode("utf-8")
+        return gif_url
+    gif_path = '{}/{}.gif'.format(RESULTS_PATH,model_name)
+    gif_url = generate_gif_url(gif_path)
+    st.markdown(
+        """
+        <img src="data:image/gif;base64,{}" alt="train_progress" style="max-width:100%;height:auto;">
+        """.format(gif_url),
+        unsafe_allow_html=True
     )

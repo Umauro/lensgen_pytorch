@@ -11,7 +11,13 @@ from src.streamlit_app.app_utils import (
     load_model,
     plot_interpolation,
     train_help,
-    sidebar_intro
+    sidebar_intro,
+    show_training_progress_gif
+)
+
+st.set_page_config(
+    page_title="LensGen results",
+    page_icon="static/app_icon.png"
 )
 
 #====================#
@@ -22,7 +28,7 @@ sidebar_intro()
 st.sidebar.header('Select experiment model')
 models_list = get_available_models()
 model_name = st.sidebar.selectbox(
-    'Select generator model',
+    'Generator model',
     models_list
 )
 if len(models_list):
@@ -37,13 +43,19 @@ else:
 #====================#
 st.title('Lensgen train results')
 if show_content:
+    # Example images
     st.header('Example generated lens')
     n_images = st.slider('Select the number of images',min_value=1,max_value=10,value=5)
     plot_generated_lens(g_model,device,n_images)
 
+    # Training stuff
     st.header('Training losses')
     plot_training_losses(model_name)
 
+    with st.beta_expander("Training progress GIF"):
+        show_training_progress_gif(model_name)
+    
+    # Latent space
     st.header('Latent space interpolation')
     n_interpolations = st.slider(
         'Select the number of interpolations experiments',
