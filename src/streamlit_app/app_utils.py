@@ -63,9 +63,9 @@ def plot_training_losses(model_name):
 
     except OSError as error:
         if error.errno == errno.ENOENT:
-            st.text('No se encuentra el archivo {}'.format(csv_path))
+            st.warning('No se encuentra el archivo {}'.format(csv_path))
         else:
-            st.text(error)
+            st.alert(error)
 
 
 def slerp(p_0,p_1,t):
@@ -109,3 +109,46 @@ def plot_interpolation(model,device,n_interpolations,n_points):
                 axes[row][col].imshow(generated_lens[0,:,:,0],cmap='hot')
                 axes[row][col].axis('off')
         st.pyplot(fig)
+
+def train_help():
+    st.markdown(
+        """
+        You must run the `train.py` script to see some results.
+
+        Params:
+        - **csv_path:** path to csv file with dataset annotations.
+        - **image_folder_path:** path to FITS images folder.
+        - **epochs:** training epochs.
+        - **batch_size:** mini batch size.
+        - **save_progress:** generate gif image from fixed noise during training **(OPTIONAL)**.
+
+
+            python train.py --csv_path CSV_PATH --image_folder_path IMAGE_FOLDER_PATH \
+            
+            --epochs EPOCHS --batch_size BATCH_SIZE [--save_progress | --no_save_progress] 
+
+        #### Example
+
+            python train.py --csv_path data/SpaceBasedTraining/classifications.csv \
+            
+                            --image_folder_path data/SpaceBasedTraning/Public/Band1 \
+                
+                            --epochs 100 --batch_size 64 --save_progress
+        """
+    )
+
+def sidebar_intro():
+    st.sidebar.markdown(
+        """
+        # LensGEN: Generador de imágenes artificiales de lentes gravitacionales vía GAN
+
+        This work is my bachelor's thesis. Originally was made in Keras, but i made 
+        a Pytorch version in order to learn this framework.
+
+        The original keras version, thesis, and notebooks are available on this [github repo](https://github.com/Umauro).
+        
+        Thesis defense is available on [Youtube](https://www.youtube.com/watch?v=n5wXqbQrQdk&ab_channel=DepartamentodeInform%C3%A1ticaUTFSM)
+        
+        ---
+        """   
+    )

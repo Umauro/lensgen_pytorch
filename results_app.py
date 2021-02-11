@@ -9,12 +9,17 @@ from src.streamlit_app.app_utils import (
     get_available_models,
     plot_generated_lens, 
     load_model,
-    plot_interpolation
+    plot_interpolation,
+    train_help,
+    sidebar_intro
 )
 
 #====================#
 #      Side bar      #
 #====================#
+
+sidebar_intro()
+st.sidebar.header('Select experiment model')
 models_list = get_available_models()
 model_name = st.sidebar.selectbox(
     'Select generator model',
@@ -56,28 +61,4 @@ if show_content:
 
 else:
     st.warning('No generator models available')
-    st.markdown(
-        """
-        You must run the `train.py` script to see some results.
-
-        Params:
-        - **csv_path:** path to csv file with dataset annotations.
-        - **image_folder_path:** path to FITS images's folder.
-        - **epochs:** training epochs.
-        - **batch_size:** mini batch size.
-        - **save_progress:** generate gif image from fixed noise during training **(OPTIONAL)**.
-
-
-            python train.py --csv_path CSV_PATH --image_folder_path IMAGE_FOLDER_PATH \
-            
-            --epochs EPOCHS --batch_size BATCH_SIZE [--save_progress | --no_save_progress] 
-
-        #### Example
-
-            python train.py --csv_path data/SpaceBasedTraining/classifications.csv \
-            
-                            --image_folder_path data/SpaceBasedTraning/Public/Band1 \
-                
-                            --epochs 100 --batch_size 64 --save_progress
-        """
-    )
+    train_help()
