@@ -134,5 +134,8 @@ data/
 # Train Results
 results
 
+# outputs
+output
+    
 #vscode
 .vscode/
