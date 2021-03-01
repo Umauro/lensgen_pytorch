@@ -36,7 +36,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--num_images',
+    '--n_images',
     type=int,
     required=True,
     help='number of images to generate'
@@ -47,7 +47,7 @@ args = parser.parse_args()
 
 MODEL_PATH = args.model_path
 OUTPUT_PATH = args.output_path
-NUM_IMAGES = args.num_images
+N_IMAGES = args.n_images
 
 #create output folder
 
@@ -85,14 +85,14 @@ except Exception as error:
 
 #Generate images
 BATCH_SIZE = 64
-batch_steps = (NUM_IMAGES // BATCH_SIZE) + 1 
+batch_steps = (N_IMAGES // BATCH_SIZE) + 1 
 
 for batch_step in tqdm(range(batch_steps)):
     # Determinate the number of images to generate in each step
-    if BATCH_SIZE * (batch_step + 1) < NUM_IMAGES:
+    if BATCH_SIZE * (batch_step + 1) < N_IMAGES:
         n_images = BATCH_SIZE
     else:
-        n_images = NUM_IMAGES - BATCH_SIZE * (batch_step)
+        n_images = N_IMAGES - BATCH_SIZE * (batch_step)
     noise = torch.randn(n_images,100,device=device)
     with torch.no_grad():
         generated_lens = g_model(noise).detach().cpu()
